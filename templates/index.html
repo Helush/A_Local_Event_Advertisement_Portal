@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advertisement Website</title>
+    <link rel="stylesheet" type="text/css" href="static/mystyle.css">
+
+</head>
+<body>
+{% if username %}
+<p>Hello {{ username | safe }}</p>
+<p>Click <a href="/posts">here</a> to see your posts</p>
+<p>Click <a href="/logout">here</a> to logout</p>
+{% else %}
+<p>Login</p>
+<form method="post" action="/login">
+    <p>Username: <input type="text" name="username"/></p>
+    <p>Password: <input type="password" name="password"/></p>
+    <p><input type="submit" value="Login"/></p>
+</form>
+<p>If you do not have an account, please click <a href="/register">here</a> to create!</p>
+{% endif %}
+</body>
+</html>

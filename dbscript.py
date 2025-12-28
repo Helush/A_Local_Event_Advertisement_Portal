@@ -6,7 +6,7 @@ def createDatabase():
 
     # table for user
     c.execute("""
-        CREATE TABLE IF NOT EXISTS USER (
+        CREATE TABLE IF NOT EXISTS USERS (
             username TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             password TEXT NOT NULL,
@@ -38,11 +38,11 @@ def createDatabase():
     conn.close()
 
 def insertUser(username, name, password, email, is_admin):
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('database.db', timeout=10)
     c = conn.cursor()
 
     c.execute("""
-    INSERT INTO USER (username, name, password, email, is_admin)
+    INSERT INTO users (username, name, password, email, is_admin)
     VALUES (?, ?, ?, ?, ?)
     """, (username, name, password, email, is_admin))
 
@@ -69,5 +69,6 @@ def insertSociety(societyID, name, description):
     conn.commit()
     conn.close()
 
-
+if __name__ == "__main__":
+    createDatabase()
 
