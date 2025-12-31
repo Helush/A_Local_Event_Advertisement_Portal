@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Registration Form</title>
+
+<script>
+
+    function toggleFee(is_paid){
+        const feeField = document.getElementById('feeField')
+        if(is_paid){
+            feeField.style.display ='block';
+        }
+        else{
+            feeField.style.display ='none';
+        }
+    }
+
+    function validate(){
+        const paid = document.querySelector('input[name="fee"][value="Paid"]').checked;
+        if(paid){
+            const fee_amount = document.getElementById('fee_amount').value
+
+            if(fee_amount === ''){
+                document.getElementById('errorcode').textContent = 'Please enter the fee amount';
+                return false;
+            }
+            if(isNaN(fee_amount) || Number(fee_amount)<0){
+                document.getElementById('errorcode').textContent='Fee must be positive number';
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+
+</script>
+
+</head>
+
+<body>
+<h1>Announce New Event</h1>
+<p id="errorcode" style = "color:blue"></p>
+<form name="announce_event" action="/createEvent" method="post" onsubmit ="return validate();">
+	<label>Name: </label>
+    <input type="text" name="name" required/><br />
+
+    <label>Time&Date: </label>
+    <input type="text" name="time_date" required/><br/>
+
+    <label>Societies: </label><br/>
+    {% for society in societies %}
+    <input type="checkbox" name="societies[]" value="{{society}}" > {{society}}<br/>
+    {% endfor %}
+
+    <label>Description: </label><br/>
+    <textarea name="description" required></textarea><br/>
+
+    <label>Entry Fee: </label><br/>
+    <input type="radio" name="fee" value="Free" onclick="toggleFee(false)"/> Free
+    <input type="radio" name="fee" value="Paid" onclick="toggleFee(true)"/> Paid
+    <br/>
+
+    <div id="feeField" style="display:none;">
+        <label>Fee amount: </label><br />
+        <input type="text" id="fee_amount" name="fee_amount"><br/>
+    </div>
+	<input type="submit" value="Submit" />
+</form>
+<hr/>
+
+<h2>My Announced Events</h2>
+
+{% if events %}
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Time & Date</th>
+        <th>Societies</th>
+        <th>Description</th>
+        <th>Entry Fee</th>
+        <th>Delete</th>
+    </tr>
+    {% for event in events %}
+    <tr>
+        <td>{{event.name}}</td>
+        <td>{{event.time_date}}</td>
+        <td>{{event.societies}}</td>
+        <td>{{event.description}}</td>
+        <td>
+            {% if event.entry_price == 'Free' %}
+            Free
+            {% else %}
+            {{event.entry_price}}
+            {% endif %}
+        </td>
+        <td>
+            <form action="/deleteEvent" method="post" style="margin:0;">
+                <input type="hidden" name="event_id" value="{{event.eventID}}"/>
+                <input type="submit" value="Delete"/>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>You have not announced any events yet.</p>
+{% endif %}
+
+</body>
+</html>

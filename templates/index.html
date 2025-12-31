@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Posts Website</title>
+    <link rel="stylesheet" type="text/css" href="static/mystyle.css">
+</head>
+<body>
+{% if username %}
+{% if is_admin %}
+<a href="/home">Home Page </a> |
+<a href="/manageSocieties"> Manage Societies </a> |
+<a href="/profile">My Profile </a> |
+<a href="/logout">Logout</a>
+{% else %}
+<a href="/home">Home Page </a> |
+<a href="/manageEvents">Announced Events </a> |
+<a href="/profile">My Profile </a> |
+<a href="/logout">Logout</a>
+{% endif %}
+{% else %}
+<p>Login</p>
+<form method="post" action="/login">
+    <p>Username: <input type="text" name="username"/></p>
+    <p>Password: <input type="password" name="password"/></p>
+    <p><input type="submit" value="Login"/></p>
+</form>
+<p>If you do not have an account, please click <a href="/register">here</a> to create!</p>
+{% endif %}
+</body>
+</html>
