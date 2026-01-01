@@ -18,6 +18,7 @@ function validate(){
 	var email = document.forms["formRegistration"]["email"].value;
 	var errormessage = "";
 	var rules = document.forms["formRegistration"]["rules"].checked;
+	const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 	if (!rules) {
 		errormessage += "You must accept the rules.<br/>";
@@ -31,7 +32,7 @@ function validate(){
 		errormessage += "The password should be entered!<br/>";
 	}
 
-	if(countDigits(pwd) < 2){
+	if (pwd !== "" && countDigits(pwd) < 2) {
 		errormessage += "The password should include at least two digits<br/>";
 	}
 
@@ -51,6 +52,10 @@ function validate(){
 		errormessage += "The email should be entered!<br/>";
 	}
 
+    if (!pattern.test(email)) {
+    errormessage += "The email format is invalid!<br/>";
+	}
+
 	if(pwd.length < 5){
 		errormessage += "The length of the password should be at least 5<br/>";
 	}
@@ -61,4 +66,44 @@ function validate(){
 		document.getElementById("errorcode").innerHTML = errormessage;
 		return false;
 	}
+}
+
+
+function validateProfile(){
+    var pwd = document.forms["profileUpdate"]["password"].value;
+    var name = document.forms["profileUpdate"]["name"].value;
+    var email = document.forms["profileUpdate"]["email"].value;
+    var errormessage = "";
+    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if(pwd == ""){
+       errormessage += "The password should be entered!<br/>";
+    }
+
+    if (pwd !== "" && countDigits(pwd) < 2) {
+       errormessage += "The password should include at least two digits<br/>";
+    }
+
+    if(pwd.length < 5){
+       errormessage += "The length of the password should be at least 5<br/>";
+    }
+
+    if(name == ""){
+       errormessage += "The name should be entered!<br/>";
+    }
+
+    if(email == ""){
+       errormessage += "The email should be entered!<br/>";
+    }
+
+    if (!pattern.test(email)) {
+       errormessage += "The email format is invalid!<br/>";
+    }
+
+    if(errormessage.length == 0)
+       return true;
+    else{
+       document.getElementById("errorcode").innerHTML = errormessage;
+       return false;
+    }
 }

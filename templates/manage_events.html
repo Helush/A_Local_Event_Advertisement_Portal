@@ -32,16 +32,14 @@
 
         return true;
     }
-
-
-
 </script>
 
 </head>
 
 <body>
+<div class="container">
 <h1>Announce New Event</h1>
-<p id="errorcode" style = "color:blue"></p>
+<p id="errorcode" class="error"></p>
 <form name="announce_event" action="/createEvent" method="post" onsubmit ="return validate();">
 	<label>Name: </label>
     <input type="text" name="name" required/><br />
@@ -73,7 +71,7 @@
 <h2>My Announced Events</h2>
 
 {% if events %}
-<table>
+<table >
     <tr>
         <th>Name</th>
         <th>Time & Date</th>
@@ -96,10 +94,10 @@
             {% endif %}
         </td>
         <td>
-            <form action="/deleteEvent" method="post" style="margin:0;">
-                <input type="hidden" name="event_id" value="{{event.eventID}}"/>
-                <input type="submit" value="Delete"/>
-            </form>
+                <form action="/deleteEvent" method="post" style="margin:0;">
+                    <input type="hidden" name="event_id" value="{{event.id}}" />
+                    <input type="submit" value="Delete" />
+                </form>
         </td>
     </tr>
     {% endfor %}
@@ -107,6 +105,6 @@
 {% else %}
 <p>You have not announced any events yet.</p>
 {% endif %}
-
+</div>
 </body>
 </html>

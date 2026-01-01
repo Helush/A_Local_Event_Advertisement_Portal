@@ -1,6 +1,8 @@
 from flask import *
 import sqlite3
 from dbscript import *
+import re
+
 app = Flask(__name__)
 app.secret_key = "123"
 
@@ -8,9 +10,9 @@ app.secret_key = "123"
 @app.route("/index")
 def index():
     if "username" in session:
-        return render_template("index.html", username=session['username'])
+        return render_template("index.html", username=session['username'], is_admin=session['is_admin'])
     else:
-        return render_template("index.html")
+        return render_template("index.html", username=None)
 
 
 @app.route("/ping")
@@ -27,10 +29,10 @@ def doLogin():
         c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
         row = c.fetchone()
         conn.close()
-        is_admin = row[4]
         if row != None:
             session["username"] = username
-        return redirect(url_for("index", is_admin=is_admin))
+            session["is_admin"] = row[4]
+        return redirect(url_for("index"))
     return redirect(url_for("index"))
 
 
@@ -44,6 +46,14 @@ def openregistrationform():
     return render_template("registration.html")
 
 
+email_pattern= r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+
+def is_valid_email(email):
+    return re.match(email_pattern, email)
+
+def is_valid_password(pwd):
+    return len(pwd) >= 5 and sum(c.isdigit() for c in pwd) >= 2
+
 @app.post("/applyregister")
 def register():
     try:
@@ -52,6 +62,14 @@ def register():
         name = request.form["fullname"]
         email = request.form["email"]
         is_admin=1 if email.startswith("org-") else 0
+
+        if not is_valid_email(email):
+            msg = "Please enter a valid email address; name@example.com"
+            return render_template("registration.html", msg=msg)
+
+        if not is_valid_password(password):
+            msg = "Password must be at least 5 characters long and contain at least 2 digits."
+            return render_template("registration.html", msg=msg)
 
         # conn = sqlite3.connect("database.db")
         # c = conn.cursor()
@@ -147,5 +165,83 @@ def createEvent():
     except Exception as e:
         print(e)
         return redirect(url_for("manageEvents"))
+
+@app.route("/deleteEvent", methods=["POST"])
+def deleteEvent():
+    if "username" not in session:
+        return redirect(url_for("index"))
+
+    eventid = request.form["event_id"]
+    print(eventid)
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+
+    # Check if user owns this event
+    c.execute("SELECT * FROM USER_EVENT WHERE eventID=? AND username=?",
+              (eventid, session['username']))
+    if c.fetchone() is None:
+        conn.close()
+        return redirect(url_for("manageEvents"))
+
+
+    c.execute("DELETE FROM SOCIETY_EVENTS WHERE eventID=?", (eventid,))
+    c.execute("DELETE FROM USER_EVENT WHERE eventID=?", (eventid,))
+    c.execute("DELETE FROM EVENT WHERE eventID=?", (eventid,))
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for("manageEvents"))
+
+
+@app.route("/profile")
+def profile():
+    if "username" not in session:
+        return redirect(url_for("index"))
+
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT username, password, name, email FROM users WHERE username=?", (session['username'],))
+
+    user = c.fetchone()
+    conn.close()
+
+    if user:
+        return render_template("profile.html",username=user[0],password=user[1],name=user[2],email=user[3])
+
+    return redirect(url_for("index"))
+
+
+@app.route("/updateProfile", methods=["POST"])
+def updateProfile():
+    if "username" not in session:
+        return redirect(url_for("index"))
+
+
+    name = request.form["name"]
+    email = request.form["email"]
+    password = request.form["password"]
+    is_admin = 1 if email.startswith("org-") else 0
+
+    if not is_valid_email(email):
+        msg = "Please enter a valid email address; name@example.com"
+        return render_template("profile.html", msg=msg)
+
+    if not is_valid_password(password):
+        msg = "Password must be at least 5 characters long and contain at least 2 digits."
+        return render_template("profile.html", msg=msg)
+
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+
+    print(name, email, password)
+
+    c.execute("UPDATE users SET name=?, email=?, password=?, is_admin=? WHERE username=?",
+                  (name, email, password, is_admin, session['username']))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("profile"))
+
 if __name__ == "__main__":
     app.run()
