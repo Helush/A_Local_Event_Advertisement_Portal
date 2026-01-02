@@ -8,8 +8,8 @@
 <body>
 {% if username %}
 {% if is_admin %}
-<a href="/home">Home Page </a> |
-<a href="/manageSocieties"> Manage Societies </a> |
+<a href="/index">Home Page </a> |
+<a href="/manageSociety"> Manage Societies </a> |
 <a href="/profile">My Profile </a> |
 <a href="/logout">Logout</a>
 {% else %}
@@ -27,5 +27,41 @@
 </form>
 <p>If you do not have an account, please click <a href="/register">here</a> to create!</p>
 {% endif %}
+<hr>
+<h2>Search Events</h2>
+<form method="post" action="/search">
+    <input type="text" name="keyword" placeholder="Search events">
+    <select name="society">
+        <option value="all">All Societies</option>
+        {% for s in societies %}
+            <option value="{{ s }}">{{ s }}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Search">
+</form>
+
+{% if events %}
+<hr>
+<h3>Search Results</h3>
+<table>
+    <tr>
+        <th>Event Name</th>
+        <th>Description</th>
+        <th>Society</th>
+    </tr>
+    {% for e in events %}
+    <tr>
+        <td>{{ e[0] }}</td>
+        <td>{{ e[1] }}</td>
+        <td>{{ e[2] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% elif events is not none %}
+<hr>
+<h3>Search Results</h3>
+<p>No events found</p>
+{% endif %}
+
 </body>
 </html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Manage Society</title>
+</head>
+<body>
+<h1>Manage Societies</h1>
+<h2>Add Society</h2>
+{% if msg %}
+    <p style="color:red;">{{ msg }}</p>
+{% endif %}
+<form method = "POST" action = "manageSociety">
+    <Label>Society Name:</Label>
+    <input type = "text" name = "society_name" required>
+    <input type = "submit" value = "Add Society">
+</form>
+<hr/>
+<h2>Societies</h2>
+{% if societies %}
+<table border="1" cellpadding="8" cellspacing="0">
+    <tr>
+        <th>Society Name</th>
+        <th>Number of Events</th>
+    </tr>
+    {% for society in societies %}
+    <tr>
+        <td>{{ society[0] }}</td>
+        <td>{{ society[1] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No Society Found</p>
+{% endif  %}
+
+</body>
+</html>

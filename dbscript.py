@@ -1,4 +1,6 @@
 import sqlite3
+from logging import raiseExceptions
+
 
 def createDatabase():
     conn = sqlite3.connect('database.db')
@@ -74,17 +76,24 @@ def insertEvent(eventID, name, time_date, entry_price, description):
     c.execute("""
     INSERT INTO EVENT (eventID, name, time_date, entry_price, description)
     VALUES (?, ?, ?, ?, ?)
-    """), (eventID, name, time_date, entry_price, description)
+    """, (eventID, name, time_date, entry_price, description))
     conn.commit()
     conn.close()
 
-def insertSociety(societyID, name, description):
+def insertSociety(name):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("""
-    INSERT INTO SOCIETY (societyID, name, description)
-    VALUES (?, ?, ?)
-    """), (societyID, name, description)
+        SELECT COUNT(*) FROM SOCIETY 
+        WHERE LOWER(name) = LOWER(?)""", (name,))
+    exists = c.fetchone()[0]
+    if exists > 0:
+        conn.close()
+        raise Exception(f"Society {name} Already Exists")
+    c.execute("""
+        INSERT INTO SOCIETY (name)
+        VALUES (?)
+    """, (name,))
     conn.commit()
     conn.close()
 
@@ -107,7 +116,6 @@ def insertSocietyEvents(event_id, society_id):
     """, (event_id, society_id))
     conn.commit()
     conn.close()
-
 
 if __name__ == "__main__":
     createDatabase()
