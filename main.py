@@ -170,7 +170,7 @@ def createEvent():
             c.execute("""select societyID from society where name=?""",(society_name,))
             society_id = c.fetchone()
             if society_id:
-                c.execute("""Insert into society_events(eventID, societyID) values (?,?)""", (event_id, society_id))
+                c.execute("""Insert into society_events(eventID, societyID) values (?,?)""", (event_id, society_id[0]))
 
         conn.commit()
         conn.close()
