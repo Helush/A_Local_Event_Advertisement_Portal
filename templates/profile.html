@@ -2,9 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Title</title>
+  <title>My Profile</title>
+    <link rel="stylesheet" type="text/css" href="static/mystyle.css">
+    <script src="/static/validation.js"></script>
 </head>
 <body>
+<div class="container">
+<h1>My Profile</h1>
+<p id="errorcode" style="color:red"></p>
+<form name="profileUpdate" action="/updateProfile" method="post" onsubmit="return validateProfile();">
+  <table>
+    <tr>
+      <th>Username</th>
+      <td>{{username}}</td>
+    </tr>
 
+    <tr>
+      <th>Password</th>
+      <td><input type="password" name="password" value="{{password}}"/></td>
+    </tr>
+
+    <tr>
+      <th>Name</th>
+      <td><input type="text" name="name" value="{{name}}"/></td>
+    </tr>
+
+    <tr>
+      <th>Email</th>
+      <td><input type="text" name="email" value="{{email}}" /></td>
+    </tr>
+
+    <tr>
+      <th></th>
+      <td colspan="2">
+        <input type="submit" value="Edit" />
+      </td>
+    </tr>
+  </table>
+</form>
+<br/>
+<a href="/index">Back to Home</a>
+
+{% if msg %}
+<p> {{ msg | safe}}</p>
+{% endif %}
+</div>
 </body>
 </html>

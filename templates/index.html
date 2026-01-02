@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Posts Website</title>
+    <title>Advertisement Website</title>
     <link rel="stylesheet" type="text/css" href="static/mystyle.css">
 </head>
 <body>
+<div class="navbar">
 {% if username %}
 {% if is_admin %}
-<a href="/index">Home Page </a> |
-<a href="/manageSociety"> Manage Societies </a> |
+<a href="/home">Home Page </a> |
+<a href="/manageSocieties"> Manage Societies </a> |
 <a href="/profile">My Profile </a> |
 <a href="/logout">Logout</a>
 {% else %}
@@ -18,7 +19,12 @@
 <a href="/profile">My Profile </a> |
 <a href="/logout">Logout</a>
 {% endif %}
-{% else %}
+{% endif %}
+</div>
+
+{% if not username %}
+
+<div class="container">
 <p>Login</p>
 <form method="post" action="/login">
     <p>Username: <input type="text" name="username"/></p>
@@ -26,7 +32,9 @@
     <p><input type="submit" value="Login"/></p>
 </form>
 <p>If you do not have an account, please click <a href="/register">here</a> to create!</p>
+</div>
 {% endif %}
+
 <hr>
 <h2>Search Events</h2>
 <form method="post" action="/search">
