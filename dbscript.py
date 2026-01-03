@@ -1,4 +1,5 @@
 import sqlite3
+from logging import raiseExceptions
 
 
 def createDatabase():
@@ -20,7 +21,7 @@ def createDatabase():
     c.execute("""
         CREATE TABLE IF NOT EXISTS EVENT (
             eventID INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL UNIQUE,
             time_date TEXT NOT NULL,
             entry_price FLOAT NOT NULL,
             description TEXT

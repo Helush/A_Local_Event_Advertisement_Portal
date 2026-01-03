@@ -199,7 +199,6 @@ def manageSociety():
                  WHERE LOWER(name) = LOWER(?)""", (name,))
             exists = c.fetchone()[0]
             if exists > 0:
-                 conn.close()
                  raise Exception(f"Society {name} Already Exists")
             c.execute("INSERT INTO SOCIETY (name) VALUES (?)", (name,))
             conn.commit()
@@ -252,8 +251,7 @@ def createEvent():
 
         return redirect(url_for("manageEvents"))
     except Exception as e:
-        print(e)
-        return redirect(url_for("manageEvents"))
+        return render_template("manage_events.html", msg=str("Event already exists."))
 
 @app.route("/search", methods=["POST"])
 def search():
@@ -395,4 +393,5 @@ def updateProfile():
                            password=password, name=name, email=email,
                            msg="Successfully updated your profile!", msg_type="success")
 if __name__ == "__main__":
+    createDatabase()
     app.run()

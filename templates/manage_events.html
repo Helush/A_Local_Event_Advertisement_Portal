@@ -17,6 +17,22 @@
     }
 
     function validate(){
+        const societies = document.getElementsByName("societies[]");
+        let flag = false;
+
+        for(let i = 0; i < societies.length; i++){
+            if(societies[i].checked){
+                flag = true;
+                break;
+            }
+        }
+
+        if(!flag){
+            document.getElementById('errorcode').textContent =
+                'Please select at least one society.';
+            return false;
+        }
+
         const paid = document.querySelector('input[name="fee"][value="Paid"]').checked;
         if(paid){
             const fee_amount = document.getElementById('fee_amount').value
@@ -43,7 +59,11 @@
 <body>
 <div class="container">
 <h1>Announce New Event</h1>
-<p id="errorcode" class="error"></p>
+<p id="errorcode" class="error">
+    {% if msg %}
+        {{ msg }}
+    {% endif %}
+</p>
 <form name="announce_event" action="/createEvent" method="post" onsubmit ="return validate();">
 	<label>Name: </label>
     <input type="text" name="name" required/><br />
