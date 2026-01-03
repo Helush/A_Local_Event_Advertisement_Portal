@@ -41,7 +41,7 @@
                 document.getElementById('errorcode').textContent = 'Please enter the fee amount';
                 return false;
             }
-            if(isNaN(fee_amount) || Number(fee_amount)<0){
+            if(isNaN(fee_amount) || !Number(fee_amount)>0){
                 document.getElementById('errorcode').textContent='Fee must be positive number';
                 return false;
             }
@@ -60,10 +60,11 @@
 <div class="container">
 <h1>Announce New Event</h1>
 <p id="errorcode" class="error">
-    {% if msg %}
-        {{ msg }}
+    {% if session.get("error_msg") %}
+        {{ session.pop("error_msg") }}
     {% endif %}
 </p>
+
 <form name="announce_event" action="/createEvent" method="post" onsubmit ="return validate();">
 	<label>Name: </label>
     <input type="text" name="name" required/><br />

@@ -9,6 +9,11 @@ from collections import defaultdict
 app = Flask(__name__)
 app.secret_key = "123"
 
+"""
+Displays the main homepage of the application. Fetches all available societies from the database
+and displays them in a list.  The page adapts based on
+whether a user is logged in, it serves as the landing page and main navigation hub for the entire application.
+"""
 @app.route("/")
 @app.route("/index")
 def index():
@@ -35,10 +40,21 @@ def index():
     else:
         return render_template("index.html", societies=societies, grouped_events=grouped_events, search_society=search_society)
 
+"""
+Simple redirect route that forwards any requests to /home back to the index page.
+Provides an alternative URL endpoint for accessing the homepage.
+"""
 @app.route("/home", methods=["GET", "POST"])
 def home():
     return redirect(url_for("index"))
 
+"""
+Handles user authentication by accepting username and password credentials from a login form.
+Validates that both fields are provided, then queries the database to verify the credentials match
+an existing user account. If authentication succeeds, creates a session storing the username and
+admin status, then redirects to the homepage. If credentials are invalid or missing, displays
+appropriate error messages to the user. GET requests simply redirect to the index page.
+"""
 @app.route("/login", methods=["POST", "GET"])
 def doLogin():
     if request.method == "POST":
@@ -64,22 +80,42 @@ def doLogin():
     return redirect(url_for("index"))
 
 
+"""
+Terminates the user's session by removing the username from the session storage,
+effectively logging them out. Redirects to the homepage where they'll see the logged-out view.
+"""
 @app.route("/logout")
 def logout():
     session.pop("username", None)
     return redirect(url_for("index"))
 
+
+"""
+Displays the user registration form where new users can create an account.
+Simply renders the registration template without any data processing.
+"""
 @app.route("/register")
 def openregistrationform():
     return render_template("registration.html")
 
 
+"""
+Validates email addresses using a regular expression pattern. Checks that the email follows
+the standard format of local-part@domain.extension. Returns True if the email is valid,
+False otherwise. Used to ensure users provide properly formatted email addresses during
+registration and profile updates.
+"""
 email_pattern= r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
-
 def is_valid_email(email):
     return re.match(email_pattern, email)
 
 
+"""
+Enforces password strength requirements to ensure user account security. Validates that passwords
+are at least 10 characters long and contain a mix of character types: at least one uppercase letter,
+one lowercase letter, and one numeric digit. Returns True if all requirements are met, False if any
+requirement fails. This helps protect user accounts from common password attacks.
+"""
 def is_valid_password(pwd):
     # Check if length is at least 10
     if len(pwd) < 10:
@@ -98,6 +134,15 @@ def is_valid_password(pwd):
         return False
 
     return True
+
+"""
+Processes new user registration by collecting username, password, full name, and email from the
+registration form. Automatically determines admin status - users with emails starting with "org-"
+are granted admin privileges. Validates the email format and password strength using helper functions.
+Checks for duplicate usernames to prevent account conflicts. If all validations pass, creates a new
+user record in the database. Displays appropriate error messages for validation failures or if the
+username already exists. Successfully registered users are redirected to the homepage.
+"""
 @app.post("/applyregister")
 def register():
     try:
@@ -140,6 +185,14 @@ def register():
         msg = f"An error occurred during registration. Please try again."
         return render_template("registration.html", msg=msg, msg_type = "error")
 
+
+"""
+Displays the event management dashboard for logged-in users. Shows all events that the current user
+has created, along with a list of all available societies for creating new events. For each event,
+retrieves associated society information and formats it as a comma-separated list. The page allows
+users to view their events with full details including ID, name, date/time, entry price, description,
+and associated societies. Only accessible to authenticated users - others are redirected to the homepage.
+"""
 @app.route("/manageEvents")
 def manageEvents():
     if "username" in session:
@@ -183,6 +236,16 @@ def manageEvents():
         return render_template("manage_events.html", societies=societies, events=events)
     return redirect(url_for("index"))
 
+
+"""
+Provides society management functionality for logged-in users. Handles both viewing all existing
+societies and creating new ones. When displaying societies, shows each society name along with a
+count of how many events are associated with it using a LEFT JOIN to include societies with zero events.
+For POST requests, processes new society creation by validating that the society name doesn't already
+exist (case-insensitive check). If a duplicate is found, displays an error message. Successfully created
+societies are added to the database and the page refreshes to show the updated list. Only accessible
+to authenticated users.
+"""
 @app.route("/manageSociety", methods=["POST", "GET"])
 def manageSociety():
     if "username" not in session:
@@ -216,20 +279,34 @@ def manageSociety():
 
 
 
+"""
+Processes the creation of new events by authenticated users. Collects event details from the form
+including name, date/time, associated societies, description, and entry fee (either free or a specific
+amount). Validates that the event name doesn't already exist in the database to prevent duplicates.
+Creates the event record, links it to the creating user through the USER_EVENT table, and establishes
+associations with selected societies through the society_events table. The societies list can include
+multiple societies that will host or sponsor the event. After successful creation, redirects to the
+event management page. Displays error messages if the event name is already taken or if any database
+operation fails.
+"""
 @app.route("/createEvent", methods=["POST"])
 def createEvent():
     if "username" not in session:
         return redirect(url_for("index"))
+    conn = None
 
     try:
         name = request.form["name"]
         time_date = request.form["time_date"]
         societies_list = request.form.getlist("societies[]")
         description = request.form["description"]
-        fee = request.form["fee"]
+        fee = request.form.get("fee")
         fee_amount = request.form.get("fee_amount", "")
 
         entry_price = "Free" if fee == "Free" else fee_amount
+        if not fee:
+            session["error_msg"] = "Please select an entry fee type."
+            return redirect(url_for("manageEvents"))
 
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
@@ -250,9 +327,20 @@ def createEvent():
         conn.close()
 
         return redirect(url_for("manageEvents"))
-    except Exception as e:
-        return render_template("manage_events.html", msg=str("Event already exists."))
+    except sqlite3.IntegrityError:
+        conn.close()
+        session["error_msg"] = "Event already exists"
+        return redirect(url_for("manageEvents"))
 
+
+"""
+Performs event searches based on user-provided keywords and optional society filters. Searches through
+event names and descriptions for matches to the keyword using SQL LIKE queries. Can either search across
+all societies or filter results to a specific society. Results are ordered by society name and event name
+for organized presentation. The search results and selected society filter are stored in the session so
+they can be displayed on the index page after redirecting. This allows users to discover events that
+match their interests or find specific information about activities offered by different societies.
+"""
 @app.route("/search", methods=["POST"])
 def search():
     keyword = request.form.get("keyword", "")
@@ -290,6 +378,14 @@ def search():
     session["search_society"] = society
     return redirect(url_for("index"))
 
+
+"""
+Displays detailed information for a specific event identified by its event ID. Retrieves the event's
+name, scheduled date/time, description, and entry price from the database. Also fetches all societies
+associated with the event to show which organizations are hosting or sponsoring it. This page provides
+users with comprehensive information about an event before they decide to attend. Accessible to all
+users regardless of authentication status, allowing anyone to browse event details.
+"""
 @app.route("/event/<event_id>")
 def event_details(event_id):
     conn = sqlite3.connect("database.db")
@@ -314,6 +410,15 @@ def event_details(event_id):
     return render_template("event_details.html", event=event, societies=societies)
 
 
+"""
+Allows authenticated users to delete events they have created. First verifies that the current user
+is the owner of the event by checking the USER_EVENT table - this prevents users from deleting events
+created by others. If ownership is confirmed, performs a cascading delete that removes the event record
+along with all associated data: the society-event associations from SOCIETY_EVENTS table and the user-event
+link from USER_EVENT table. This ensures complete cleanup and maintains database integrity. After successful
+deletion, redirects back to the event management page. Non-owners attempting to delete an event are silently
+redirected without making any changes.
+"""
 @app.route("/deleteEvent", methods=["POST"])
 def deleteEvent():
     if "username" not in session:
@@ -340,7 +445,13 @@ def deleteEvent():
     conn.close()
     return redirect(url_for("manageEvents"))
 
-
+"""
+Displays the user profile page for authenticated users. Retrieves the current user's account information
+from the database including username, password, full name, and email address. This information is displayed
+in the profile template where users can review their account details and make updates if needed. Only
+accessible to logged-in users - unauthenticated visitors are redirected to the homepage. If the user record
+cannot be found in the database, also redirects to the homepage.
+"""
 @app.route("/profile")
 def profile():
     if "username" not in session:
@@ -359,6 +470,15 @@ def profile():
     return redirect(url_for("index"))
 
 
+"""
+Processes user profile updates for authenticated users. Accepts modified name, email, and password from
+the profile form. Re-validates the email format and password strength using the same validation functions
+used during registration to maintain consistent security standards. Automatically updates the admin status
+based on whether the email starts with "org-" - allowing users to gain or lose admin privileges if they
+change their email prefix. If validation fails, redisplays the profile form with error messages and the
+submitted values so users can correct issues without re-entering all information. Upon successful update,
+saves changes to the database and displays a success message. Only accessible to authenticated users.
+"""
 @app.route("/updateProfile", methods=["POST"])
 def updateProfile():
     if "username" not in session:
@@ -377,6 +497,11 @@ def updateProfile():
                                msg=msg, msg_type="error")
     if not is_valid_password(password):
         msg = "The password should include at least one upper case letter, one lower case letter, and one digit and its length should be at least ten."
+        return render_template("profile.html", username=session['username'],
+                               password=password, name=name, email=email,
+                               msg=msg, msg_type="error")
+    if name == "":
+        msg = "Please insert full name"
         return render_template("profile.html", username=session['username'],
                                password=password, name=name, email=email,
                                msg=msg, msg_type="error")
