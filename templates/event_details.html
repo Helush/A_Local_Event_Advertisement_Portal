@@ -7,9 +7,12 @@
 </head>
 <body>
 <div class="container">
-  <h1>{{ event[0] }}</h1>
 
   <table>
+    <tr>
+      <th>Name: </th>
+      <td>{{ event[0] }}</td>
+    </tr>
     <tr>
       <th>Time & Date:</th>
       <td>{{ event[1] }}</td>
@@ -21,8 +24,8 @@
     </tr>
 
     <tr>
-      <th>Entry Price:</th>
-      <td>{% if event[3]=="Free" %}£{{ event[3] }}{% else %}Free{% endif %}</td>
+      <th>Entry Price(TL):</th>
+      <td>{% if event[3] %}{{ event[3] }}{% else %}Free{% endif %}</td>
     </tr>
     <tr>
       <th>Description:</th>
