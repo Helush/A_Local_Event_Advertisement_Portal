@@ -9,7 +9,11 @@
 <body>
 <div class="container">
 <h1>My Profile</h1>
-<p id="errorcode" style="color:red"></p>
+<p class="message {{ msg_type }}">
+{% if msg %}
+{{ msg }}
+{% endif %}
+</p>
 <form name="profileUpdate" action="/updateProfile" method="post" onsubmit="return validateProfile();">
   <table>
     <tr>
@@ -43,9 +47,7 @@
 <br/>
 <a href="/index">Back to Home</a>
 
-{% if msg %}
-<p> {{ msg | safe}}</p>
-{% endif %}
+
 </div>
 </body>
 </html>

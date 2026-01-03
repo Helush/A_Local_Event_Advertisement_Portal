@@ -79,9 +79,25 @@ email_pattern= r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
 def is_valid_email(email):
     return re.match(email_pattern, email)
 
-def is_valid_password(pwd):
-    return len(pwd) >= 5 and sum(c.isdigit() for c in pwd) >= 2
 
+def is_valid_password(pwd):
+    # Check if length is at least 10
+    if len(pwd) < 10:
+        return False
+
+    # Check for at least one uppercase letter
+    if not any(c.isupper() for c in pwd):
+        return False
+
+    # Check for at least one lowercase letter
+    if not any(c.islower() for c in pwd):
+        return False
+
+    # Check for at least one digit
+    if not any(c.isdigit() for c in pwd):
+        return False
+
+    return True
 @app.post("/applyregister")
 def register():
     try:
@@ -93,25 +109,36 @@ def register():
 
         if not is_valid_email(email):
             msg = "Please enter a valid email address; name@example.com"
-            return render_template("registration.html", msg=msg)
+            return render_template("registration.html", msg=msg, msg_type = "error")
 
         if not is_valid_password(password):
-            msg = "Password must be at least 5 characters long and contain at least 2 digits."
-            return render_template("registration.html", msg=msg)
+            msg = "The password should include at least one upper case letter, one lower case letter, and one digit and its length should be at least ten."
+
+            return render_template("registration.html", msg=msg, msg_type = "error")
 
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
+
+        # Check if username already exists
+        c.execute("SELECT username FROM USERS WHERE username=?", (username,))
+        existing_user = c.fetchone()
+
+        if existing_user:
+            conn.close()
+            msg = "Username already exists. Please choose a different username."
+            return render_template("registration.html", msg=msg,msg_type = "error")
+
         c.execute("""INSERT INTO users (username, name, password, email, is_admin)
         VALUES (?, ?, ?, ?, ?)
         """, (username, name, password, email, is_admin))
         conn.commit()
         conn.close()
-        # insertUser(username, name, password, email, is_admin)
 
-        msg = "Successfully registered. Please click <a href='/index'>here</a> to go back to the home page."
-        return render_template("registration.html", msg= msg)
+        msg = "Successfully registered"
+        return redirect(url_for("index"))
     except Exception as e:
-        return render_template("registration.html", msg=str(e))
+        msg = f"An error occurred during registration. Please try again."
+        return render_template("registration.html", msg=msg, msg_type = "error")
 
 @app.route("/manageEvents")
 def manageEvents():
@@ -347,16 +374,16 @@ def updateProfile():
 
     if not is_valid_email(email):
         msg = "Please enter a valid email address; name@example.com"
-        return render_template("profile.html", msg=msg)
-
+        return render_template("profile.html", username=session['username'],
+                               password=password, name=name, email=email,
+                               msg=msg, msg_type="error")
     if not is_valid_password(password):
-        msg = "Password must be at least 5 characters long and contain at least 2 digits."
-        return render_template("profile.html", msg=msg)
-
+        msg = "The password should include at least one upper case letter, one lower case letter, and one digit and its length should be at least ten."
+        return render_template("profile.html", username=session['username'],
+                               password=password, name=name, email=email,
+                               msg=msg, msg_type="error")
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-
-    print(name, email, password)
 
     c.execute("UPDATE USERS SET name=?, email=?, password=?, is_admin=? WHERE username=?",
                   (name, email, password, is_admin, session['username']))
@@ -364,7 +391,8 @@ def updateProfile():
     conn.commit()
     conn.close()
 
-    return redirect(url_for("profile"))
-
+    return render_template("profile.html", username=session['username'],
+                           password=password, name=name, email=email,
+                           msg="Successfully updated your profile!", msg_type="success")
 if __name__ == "__main__":
     app.run()

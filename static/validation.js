@@ -1,13 +1,22 @@
 
 
-function countDigits(pwd){
-	var i;
-	var counter = 0;
-	for(i=0; i<pwd.length; i++){
-		if("0123456789".search(pwd[i])!= -1)
-			counter++;
-	}
-	return counter;
+function validatePassword(password){
+    if (password.length < 10) {
+        return false;
+    }
+
+	if (!/[A-Z]/.test(password)) { //test for atleast one upper case
+        return false;
+    }
+	if (!/[a-z]/.test(password)) { //test for atleast one lower case
+        return false;
+    }
+
+	if (!/[0-9]/.test(password)) { //test for atleast one digit
+        return false;
+    }
+	return true;
+
 }
 
 function validate(){
@@ -32,8 +41,10 @@ function validate(){
 		errormessage += "The password should be entered!<br/>";
 	}
 
-	if (pwd !== "" && countDigits(pwd) < 2) {
-		errormessage += "The password should include at least two digits<br/>";
+	if (pwd !== "" && !validatePassword(pwd)) {
+		errormessage += "The password should include at least \n" +
+			"one upper case letter, one lower case letter, and one digit and its length should be at least \n" +
+			"ten.<br/>";
 	}
 
 	if(pwd2 == ""){
@@ -56,9 +67,6 @@ function validate(){
     errormessage += "The email format is invalid!<br/>";
 	}
 
-	if(pwd.length < 5){
-		errormessage += "The length of the password should be at least 5<br/>";
-	}
 
 	if(errormessage.length == 0)
 		return true;
@@ -80,13 +88,12 @@ function validateProfile(){
        errormessage += "The password should be entered!<br/>";
     }
 
-    if (pwd !== "" && countDigits(pwd) < 2) {
-       errormessage += "The password should include at least two digits<br/>";
-    }
+    if (pwd !== "" && !validatePassword(pwd)) {
+		errormessage += "The password should include at least \n" +
+			"one upper case letter, one lower case letter, and one digit and its length should be at least \n" +
+			"ten.<br/>";    }
 
-    if(pwd.length < 5){
-       errormessage += "The length of the password should be at least 5<br/>";
-    }
+
 
     if(name == ""){
        errormessage += "The name should be entered!<br/>";

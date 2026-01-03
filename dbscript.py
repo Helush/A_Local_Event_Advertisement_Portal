@@ -1,5 +1,4 @@
 import sqlite3
-from logging import raiseExceptions
 
 
 def createDatabase():
@@ -21,7 +20,7 @@ def createDatabase():
     c.execute("""
         CREATE TABLE IF NOT EXISTS EVENT (
             eventID INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
+            name TEXT UNIQUE NOT NULL,
             time_date TEXT NOT NULL,
             entry_price FLOAT NOT NULL,
             description TEXT
@@ -33,8 +32,8 @@ def createDatabase():
         CREATE TABLE IF NOT EXISTS USER_EVENT(
                 username TEXT NOT NULL,
                 eventID INTEGER NOT NULL,
-                FOREIGN KEY (username) REFERENCES USERS(username),
-                FOREIGN KEY (eventID) REFERENCES EVENT(eventID),
+                FOREIGN KEY (username) REFERENCES USERS(username) ON DELETE CASCADE,
+                FOREIGN KEY (eventID) REFERENCES EVENT(eventID) ON DELETE CASCADE,
                 PRIMARY KEY (username, eventID))""")
 
     # table for society
@@ -51,8 +50,8 @@ def createDatabase():
             eventID INTEGER NOT NULL,
             societyID INTEGER NOT NULL,
 
-            FOREIGN KEY (eventID) REFERENCES EVENT(eventID),
-            FOREIGN KEY (societyID) REFERENCES SOCIETY(societyID),
+            FOREIGN KEY (eventID) REFERENCES EVENT(eventID) ON DELETE CASCADE,
+            FOREIGN KEY (societyID) REFERENCES SOCIETY(societyID) ON DELETE CASCADE,
             PRIMARY KEY (eventID, societyID))""")
 
     conn.commit() # save changes

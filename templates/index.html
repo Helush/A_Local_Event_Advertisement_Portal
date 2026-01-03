@@ -31,9 +31,11 @@
     <p>Password: <input type="password" name="password"/></p>
     <p><input type="submit" value="Login"/></p>
 </form>
+<p class="message {{ msg_type }}">
 {% if msg %}
-<p> {{ msg }}</p>
+{{ msg }}
 {% endif %}
+</p>
 <br />
 <p>If you do not have an account, please click <a href="/register">here</a> to create!</p>
 </div>
