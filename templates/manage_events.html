@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Registration Form</title>
+<title>Manage Events Form</title>
+<link rel="stylesheet" type="text/css" href="static/mystyle.css">
 
 <script>
 
@@ -50,15 +51,15 @@
     <label>Time&Date: </label>
     <input type="text" name="time_date" required/><br/>
 
-    <label>Societies: </label><br/>
+    <label>Societies: </label>
     {% for society in societies %}
     <input type="checkbox" name="societies[]" value="{{society}}" > {{society}}<br/>
     {% endfor %}
-
-    <label>Description: </label><br/>
+<br/>
+    <label>Description: </label>
     <textarea name="description" required></textarea><br/>
 
-    <label>Entry Fee: </label><br/>
+    <label>Entry Fee: </label>
     <input type="radio" name="fee" value="Free" onclick="toggleFee(false)"/> Free
     <input type="radio" name="fee" value="Paid" onclick="toggleFee(true)"/> Paid
     <br/>
@@ -67,10 +68,10 @@
         <label>Fee amount: </label><br />
         <input type="text" id="fee_amount" name="fee_amount"><br/>
     </div>
-	<input type="submit" value="Submit" />
+	<input type="submit" value="Submit" /><br /><br />
 </form>
 <hr/>
-
+<br/>
 <h2>My Announced Events</h2>
 
 {% if events %}
@@ -108,6 +109,8 @@
 {% else %}
 <p>You have not announced any events yet.</p>
 {% endif %}
-
+<br/><br />
+<a href="/index">Back to Home</a>
+</div>
 </body>
 </html>

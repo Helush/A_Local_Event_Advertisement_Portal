@@ -10,7 +10,7 @@
 {% if username %}
 {% if is_admin %}
 <a href="/home">Home Page </a> |
-<a href="/manageSocieties"> Manage Societies </a> |
+<a href="/manageSociety"> Manage Societies </a> |
 <a href="/profile">My Profile </a> |
 <a href="/logout">Logout</a>
 {% else %}
@@ -31,6 +31,10 @@
     <p>Password: <input type="password" name="password"/></p>
     <p><input type="submit" value="Login"/></p>
 </form>
+{% if msg %}
+<p> {{ msg }}</p>
+{% endif %}
+<br />
 <p>If you do not have an account, please click <a href="/register">here</a> to create!</p>
 </div>
 {% endif %}
@@ -48,24 +52,51 @@
     <input type="submit" value="Search">
 </form>
 
-{% if events %}
+{% if grouped_events %}
 <hr>
 <h3>Search Results</h3>
+{% if search_society == "all" %}
+    {% for society, society_events in grouped_events.items() %}
+        <h4>{{ society }}:</h4>
+        <table>
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th></th>
+            </tr>
+            {% for e in society_events %}
+            <tr>
+                <td>{{ e[1] }}</td>
+                <td>{{ e[2] }}</td>
+                <td><a href="/event/{{e[0]}}">See More</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endfor %}
+
+{% else %}
 <table>
     <tr>
         <th>Event Name</th>
         <th>Description</th>
         <th>Society</th>
+        <th></th>
     </tr>
-    {% for e in events %}
+    {% for society_events in grouped_events.values() %}
+    {% for e in society_events %}
     <tr>
-        <td>{{ e[0] }}</td>
         <td>{{ e[1] }}</td>
         <td>{{ e[2] }}</td>
+        <td>{{ e[3] }}</td>
+        <td><a href="/event/{{ e[0] }}">See More</a></td>
+
     </tr>
     {% endfor %}
+{% endfor %}
+
 </table>
-{% elif events is not none %}
+{% endif %}
+{% elif grouped_events is not none %}
 <hr>
 <h3>Search Results</h3>
 <p>No events found</p>

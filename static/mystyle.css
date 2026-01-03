@@ -141,14 +141,14 @@ input[type="submit"]:hover {
   border-left: 4px solid #4caf50;
 }
 
-.error {
-  background-color: #ffcdd2; /* Light red */
-  color: #c62828; /* Dark red */
-  padding: 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  border-left: 4px solid #f44336;
-}
+/*.error {*/
+/*  background-color: #ffcdd2; !* Light red *!*/
+/*  color: #c62828; !* Dark red *!*/
+/*  padding: 15px;*/
+/*  border-radius: 4px;*/
+/*  margin-bottom: 20px;*/
+/*  border-left: 4px solid #f44336;*/
+/*}*/
 
 /* Tables */
 table {
@@ -194,17 +194,12 @@ tr:last-child td {
   border-radius: 5px;
 }
 
-/* Mobile Friendly */
-@media (max-width: 768px) {
-  .navbar li {
-    display: block;
-  }
+.arrow {
+  color: #e89cae;
+  font-size: 2em;
+}
 
-  .navbar a {
-    text-align: center;
-  }
-
-  .container {
-    padding: 20px;
-  }
+.arrow:hover {
+  color: #d4849c;
+  text-decoration: none;
 }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Event Details</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='mystyle.css') }}">
+</head>
+<body>
+<div class="container">
+  <h1>{{ event[0] }}</h1>
+
+  <table>
+    <tr>
+      <th>Time & Date:</th>
+      <td>{{ event[1] }}</td>
+    </tr>
+
+    <tr>
+      <th>Societies:</th>
+      <td>{{ societies|join(', ') }}</td>
+    </tr>
+
+    <tr>
+      <th>Entry Price:</th>
+      <td>{% if event[3]=="Free" %}£{{ event[3] }}{% else %}Free{% endif %}</td>
+    </tr>
+    <tr>
+      <th>Description:</th>
+      <td>{{ event[2] }}</td>
+    </tr>
+  </table>
+
+  <br/>
+  <a href="/">Back to Home</a>
+</div>
+</body>
+</html>

@@ -1,7 +1,10 @@
+from tokenize import group
+
 from flask import *
 import sqlite3
 from dbscript import *
 import re
+from collections import defaultdict
 
 app = Flask(__name__)
 app.secret_key = "123"
@@ -11,37 +14,53 @@ app.secret_key = "123"
 def index():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("""SELECT NAME FROM SOCIETY""")
+    c.execute("SELECT NAME FROM SOCIETY")
     societies = []
     records = c.fetchall()
     for row in records:
         societies.append(row[0])
     conn.close()
     events = session.pop("events", None)
+    search_society = session.get("search_society", None)
+
+    grouped_events = None
+    if events:
+        grouped_events = defaultdict(list)
+        for e in events:
+            society_name = e[3]
+            grouped_events[society_name].append(e)
+
     if "username" in session:
-        return render_template("index.html", username=session['username'], is_admin=session['is_admin'], societies=societies, events = events)
+        return render_template("index.html", username=session['username'], is_admin=session['is_admin'],  societies=societies, grouped_events=grouped_events, search_society=search_society)
     else:
-        return render_template("index.html", societies=societies, events = events)
+        return render_template("index.html", societies=societies, grouped_events=grouped_events, search_society=search_society)
 
-
-@app.route("/ping")
-def ping():
-    return "THIS IS THE CORRECT APP"
+@app.route("/home", methods=["GET", "POST"])
+def home():
+    return redirect(url_for("index"))
 
 @app.route("/login", methods=["POST", "GET"])
 def doLogin():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+
+        if not username or not password:
+            msg = "Please enter both username and password"
+            return render_template("index.html", msg=msg)
+
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+        c.execute("SELECT * FROM USERS WHERE username=? AND password=?", (username, password))
         row = c.fetchone()
         conn.close()
         if row != None:
             session["username"] = username
             session["is_admin"] = row[4]
-        return redirect(url_for("index"))
+            return redirect(url_for("index"))
+        else:
+            msg = "Invalid username or password"
+            return render_template("index.html", msg=msg)
     return redirect(url_for("index"))
 
 
@@ -80,12 +99,14 @@ def register():
             msg = "Password must be at least 5 characters long and contain at least 2 digits."
             return render_template("registration.html", msg=msg)
 
-        # conn = sqlite3.connect("database.db")
-        # c = conn.cursor()
-        # c.execute("INSERT INTO user VALUES(?,?,?,?,?)", (username, password, name, email, is_admin))
-        # conn.commit()
-        # conn.close()
-        insertUser(username, name, password, email, is_admin)
+        conn = sqlite3.connect("database.db")
+        c = conn.cursor()
+        c.execute("""INSERT INTO users (username, name, password, email, is_admin)
+        VALUES (?, ?, ?, ?, ?)
+        """, (username, name, password, email, is_admin))
+        conn.commit()
+        conn.close()
+        # insertUser(username, name, password, email, is_admin)
 
         msg = "Successfully registered. Please click <a href='/index'>here</a> to go back to the home page."
         return render_template("registration.html", msg= msg)
@@ -140,14 +161,23 @@ def manageSociety():
     if "username" not in session:
         return redirect(url_for("index"))
     msg = None
+
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
     if request.method == "POST":
         try:
             name = request.form["society_name"]
-            insertSociety(name)
+            c.execute("""
+                 SELECT COUNT(*) FROM SOCIETY
+                 WHERE LOWER(name) = LOWER(?)""", (name,))
+            exists = c.fetchone()[0]
+            if exists > 0:
+                 conn.close()
+                 raise Exception(f"Society {name} Already Exists")
+            c.execute("INSERT INTO SOCIETY (name) VALUES (?)", (name,))
+            conn.commit()
         except Exception as e:
             msg = str(e)
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
     c.execute("""
         SELECT s.name, COUNT(se.eventID) AS count_event 
         FROM SOCIETY s
@@ -208,16 +238,17 @@ def search():
 
     if society == "all":
         c.execute("""
-            SELECT e.name, e.description, s.name
+            SELECT e.eventID, e.name, e.description, s.name
             FROM EVENT e
             JOIN society_events se ON e.eventID = se.eventID
             JOIN SOCIETY s ON se.societyID = s.societyID
             WHERE e.name LIKE '%' || ? || '%'
                OR e.description LIKE '%' || ? || '%'
+            ORDER BY s.name, e.name
         """, (keyword, keyword))
     else:
         c.execute("""
-            SELECT e.name, e.description, s.name
+            SELECT e.eventID, e.name, e.description, s.name
             FROM EVENT e
             JOIN society_events se ON e.eventID = se.eventID
             JOIN SOCIETY s ON se.societyID = s.societyID
@@ -231,9 +262,31 @@ def search():
     events = c.fetchall()
     conn.close()
     session["events"] = events
+    session["search_society"] = society
     return redirect(url_for("index"))
 
+@app.route("/event/<event_id>")
+def event_details(event_id):
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("""
+        SELECT e.name, e.time_date, e.description, e.entry_price
+        FROM EVENT e
+        WHERE e.eventID = ?
+    """, (event_id,))
+    event = c.fetchone()
 
+    c.execute("""
+        SELECT s.name
+        FROM SOCIETY s
+        JOIN society_events se ON s.societyID = se.societyID
+        WHERE se.eventID = ?
+    """, (event_id,))
+    societies = [row[0] for row in c.fetchall()]
+
+    conn.close()
+
+    return render_template("event_details.html", event=event, societies=societies)
 
 
 @app.route("/deleteEvent", methods=["POST"])
@@ -270,7 +323,7 @@ def profile():
 
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT username, password, name, email FROM users WHERE username=?", (session['username'],))
+    c.execute("SELECT username, password, name, email FROM USERS WHERE username=?", (session['username'],))
 
     user = c.fetchone()
     conn.close()
@@ -305,7 +358,7 @@ def updateProfile():
 
     print(name, email, password)
 
-    c.execute("UPDATE users SET name=?, email=?, password=?, is_admin=? WHERE username=?",
+    c.execute("UPDATE USERS SET name=?, email=?, password=?, is_admin=? WHERE username=?",
                   (name, email, password, is_admin, session['username']))
 
     conn.commit()
